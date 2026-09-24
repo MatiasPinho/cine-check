@@ -45,3 +45,17 @@ class GitHubNotificationTests(unittest.TestCase):
             self.assertEqual(payload["assignees"], ["MatiasPinho"])
             self.assertIn("22:15", payload["title"])
             self.assertIn("| viernes 25/09/2026 | 22:15", payload["body"])
+
+    def test_manual_test_is_labeled_and_does_not_claim_new_showings(self):
+        env = {
+            "GITHUB_REPOSITORY": "MatiasPinho/cine-check",
+            "GITHUB_REPOSITORY_OWNER": "MatiasPinho",
+            "GITHUB_TOKEN": "test-token",
+        }
+        fake_response = io.BytesIO(json.dumps({"html_url": "https://github.com/MatiasPinho/cine-check/issues/2"}).encode())
+        with patch.dict("os.environ", env), patch.object(notify_github, "urlopen", return_value=fake_response) as open_url:
+            notify_github.send_test()
+        payload = json.loads(open_url.call_args.args[0].data)
+        self.assertIn("PRUEBA", payload["title"])
+        self.assertIn("No se publicó ninguna función nueva", payload["body"])
+        self.assertEqual(payload["assignees"], ["MatiasPinho"])

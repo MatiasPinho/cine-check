@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
+    inputs:
+      test_notification:
+        description: "Enviar aviso de prueba al celular (sin modificar funciones)"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -15,6 +21,7 @@ concurrency:
 
 jobs:
   monitor:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.test_notification }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -49,3 +56,21 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Actualizar funciones de IMAX Norcenter"
           git push origin HEAD
+
+  test_mobile_notification:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_notification }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v7
+
+      - name: Preparar Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Enviar aviso de prueba
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python notify_github.py --test

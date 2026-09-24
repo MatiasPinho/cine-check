@@ -16,6 +16,8 @@ El archivo `state/showings.json` se crea en la primera ejecución y se actualiza
 
 GitHub puede retrasar alguna ejecución programada. El workflow también permite iniciarlo manualmente desde **Actions**.
 
+Para comprobar el push en GitHub Mobile, ejecutá manualmente el workflow y marcá **Enviar aviso de prueba al celular**. Crea un issue asignado al dueño, claramente marcado como `PRUEBA`, sin modificar el estado ni simular una función nueva.
+
 ## Ejecutar localmente
 
 Con Python 3.10 o posterior:

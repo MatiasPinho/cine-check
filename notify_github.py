@@ -51,16 +51,7 @@ def issue_content(showings: list[dict[str, str]]) -> tuple[str, str]:
     return title, "\n".join(lines)
 
 
-def notify(path: Path) -> str | None:
-    with path.open(encoding="utf-8") as file:
-        showings = json.load(file)
-    if not isinstance(showings, list):
-        raise ValueError("El archivo de novedades no es una lista")
-    if not showings:
-        print("No hay funciones nuevas; no se envía ninguna notificación.")
-        return None
-
-    title, body = issue_content(showings)
+def create_issue(title: str, body: str) -> str:
     repository = os.environ["GITHUB_REPOSITORY"]
     owner = os.environ["GITHUB_REPOSITORY_OWNER"]
     token = os.environ["GITHUB_TOKEN"]
@@ -85,12 +76,38 @@ def notify(path: Path) -> str | None:
     return url
 
 
+def notify(path: Path) -> str | None:
+    with path.open(encoding="utf-8") as file:
+        showings = json.load(file)
+    if not isinstance(showings, list):
+        raise ValueError("El archivo de novedades no es una lista")
+    if not showings:
+        print("No hay funciones nuevas; no se envía ninguna notificación.")
+        return None
+
+    title, body = issue_content(showings)
+    return create_issue(title, body)
+
+
+def send_test() -> str:
+    return create_issue(
+        "🧪 PRUEBA: notificación IMAX Norcenter",
+        "## Prueba de notificación al celular\n\n"
+        "Este aviso se envió para comprobar las notificaciones de GitHub Mobile. "
+        "No se publicó ninguna función nueva y el estado del monitor no se modificó.\n\n"
+        f"[Ver la página de Showcase]({SOURCE_PAGE})\n",
+    )
+
+
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Uso: python notify_github.py ARCHIVO_DE_NOVEDADES.json", file=sys.stderr)
+        print("Uso: python notify_github.py ARCHIVO_DE_NOVEDADES.json|--test", file=sys.stderr)
         return 2
     try:
-        notify(Path(sys.argv[1]))
+        if sys.argv[1] == "--test":
+            send_test()
+        else:
+            notify(Path(sys.argv[1]))
     except (ValueError, OSError, HTTPError, URLError, KeyError, TypeError) as exc:
         print(f"ERROR al enviar la notificación: {exc}", file=sys.stderr)
         return 1
