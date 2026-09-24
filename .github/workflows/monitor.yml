@@ -1,0 +1,43 @@
+name: Monitorear IMAX Norcenter
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monitor-imax-norcenter
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Preparar Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Revisar funciones
+        run: python monitor.py
+
+      - name: Guardar estado en el repositorio
+        run: |
+          git add state/showings.json
+          if git diff --cached --quiet; then
+            echo "El estado no cambió."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Actualizar funciones de IMAX Norcenter"
+          git push origin HEAD
