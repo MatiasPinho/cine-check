@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: monitor-imax-norcenter
@@ -28,7 +29,14 @@ jobs:
           python-version: "3.13"
 
       - name: Revisar funciones
-        run: python monitor.py
+        id: check
+        run: python monitor.py --changes /tmp/showcase-new-showings.json
+
+      - name: Notificar nuevas funciones
+        if: steps.check.outputs.new_count != '0'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python notify_github.py /tmp/showcase-new-showings.json
 
       - name: Guardar estado en el repositorio
         run: |

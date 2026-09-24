@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -40,7 +41,7 @@ class MonitorTests(unittest.TestCase):
                 log = "\n".join(str(call) for call in second_log.call_args_list)
                 self.assertIn("NUEVA FUNCIÓN: 2026-09-25 22:15", log)
                 self.assertNotIn("NUEVA FUNCIÓN: 2026-09-25 18:50", log)
-                self.assertEqual(len(monitor.load_state(state)), 2)
+                self.assertEqual(len(monitor.load_state(state)["showings"]), 2)
 
     def test_invalid_response_does_not_replace_last_good_state(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -64,6 +65,36 @@ class MonitorTests(unittest.TestCase):
             monitor.extract_showings(data),
             [{"date": "2026-09-25", "time": "N 01:10", "format": "IMAX-Subtitulado"}],
         )
+
+    def test_removed_showing_does_not_trigger_notification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state = Path(directory) / "showings.json"
+            monitor.save_state(state, monitor.extract_showings(response(["18:50", "22:15"])))
+            with patch.object(monitor, "fetch_data", return_value=response(["18:50"])):
+                _, new_showings = monitor.run(state)
+            self.assertEqual(new_showings, [])
+            self.assertEqual(len(monitor.load_state(state)["showings"]), 1)
+
+    def test_reappearing_old_showing_does_not_trigger_notification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state = Path(directory) / "showings.json"
+            original = monitor.extract_showings(response(["18:50", "22:15"]))
+            monitor.save_state(state, original)
+            with patch.object(monitor, "fetch_data", side_effect=[response(["18:50"]), response(["18:50", "22:15"])]):
+                monitor.run(state)
+                _, new_showings = monitor.run(state)
+            self.assertEqual(new_showings, [])
+            self.assertEqual(len(monitor.load_state(state)["seen"]), 2)
+
+    def test_existing_version_one_state_is_migrated_without_alerts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state = Path(directory) / "showings.json"
+            original = monitor.extract_showings(response(["18:50"]))
+            state.write_text(json.dumps({"version": 1, "showings": original}), encoding="utf-8")
+            with patch.object(monitor, "fetch_data", return_value=response(["18:50"])):
+                _, new_showings = monitor.run(state)
+            self.assertEqual(new_showings, [])
+            self.assertEqual(monitor.load_state(state)["seen"], original)
 
 
 if __name__ == "__main__":
