@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "showings": [
+    {
+      "date": "2026-09-25",
+      "time": "18:50",
+      "format": "IMAX-Subtitulado"
+    },
+    {
+      "date": "2026-09-26",
+      "time": "22:15",
+      "format": "IMAX-Subtitulado"
+    },
+    {
+      "date": "2026-09-27",
+      "time": "12:30",
+      "format": "IMAX-Subtitulado"
+    },
+    {
+      "date": "2026-09-28",
+      "time": "15:50",
+      "format": "IMAX-Subtitulado"
+    },
+    {
+      "date": "2026-09-29",
+      "time": "15:55",
+      "format": "IMAX-Subtitulado"
+    },
+    {
+      "date": "2026-09-30",
+      "time": "22:25",
+      "format": "IMAX-Subtitulado"
+    }
+  ]
+}
