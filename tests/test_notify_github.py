@@ -1,3 +1,4 @@
+import io
 import json
 import tempfile
 import unittest
@@ -23,3 +24,24 @@ class GitHubNotificationTests(unittest.TestCase):
             with patch.object(notify_github, "urlopen") as open_url:
                 self.assertIsNone(notify_github.notify(changes))
             open_url.assert_not_called()
+
+    def test_new_showing_creates_issue_assigned_to_owner(self):
+        with tempfile.TemporaryDirectory() as directory:
+            changes = Path(directory) / "changes.json"
+            changes.write_text(
+                json.dumps([{"date": "2026-09-25", "time": "22:15", "format": "IMAX-Subtitulado"}]),
+                encoding="utf-8",
+            )
+            env = {
+                "GITHUB_REPOSITORY": "MatiasPinho/cine-check",
+                "GITHUB_REPOSITORY_OWNER": "MatiasPinho",
+                "GITHUB_TOKEN": "test-token",
+            }
+            fake_response = io.BytesIO(json.dumps({"html_url": "https://github.com/MatiasPinho/cine-check/issues/1"}).encode())
+            with patch.dict("os.environ", env), patch.object(notify_github, "urlopen", return_value=fake_response) as open_url:
+                notify_github.notify(changes)
+            request = open_url.call_args.args[0]
+            payload = json.loads(request.data)
+            self.assertEqual(payload["assignees"], ["MatiasPinho"])
+            self.assertIn("22:15", payload["title"])
+            self.assertIn("| viernes 25/09/2026 | 22:15", payload["body"])
