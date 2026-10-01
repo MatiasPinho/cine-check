@@ -1,12 +1,6 @@
 {
   "version": 2,
-  "showings": [
-    {
-      "date": "2026-09-30",
-      "time": "22:25",
-      "format": "IMAX-Subtitulado"
-    }
-  ],
+  "showings": [],
   "seen": [
     {
       "date": "2026-09-25",
